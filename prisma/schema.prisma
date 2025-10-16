@@ -1,0 +1,250 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PapelUsuario {
+  admin
+  gerente
+  garcom
+  cozinha
+  bar
+}
+
+enum StatusPedido {
+  recebido
+  em_preparo
+  pronto
+  entregue
+  cancelado
+}
+
+enum StatusItem {
+  pendente
+  preparo
+  pronto
+  entregue
+  cancelado
+}
+
+
+enum AcaoModificador {
+  remover
+  adicionar
+  substituir
+}
+//foi
+model Restaurante {
+  id          BigInt   @id @default(autoincrement())
+  nome        String
+  documento   String?  // CNPJ ou CPF
+  email       String?
+  telefone    String?
+  timezone    String   @default("America/Sao_Paulo")
+  enderecoLogradouro String?
+  enderecoNumero     String?
+  enderecoBairro     String?
+  enderecoCidade     String?
+  enderecoEstado     String?
+  enderecoCep        String?
+  ativo       Boolean @default(true)
+  criadoEm    DateTime @default(now())
+
+  roles      Role[] 
+  usuarios   Usuario[]
+  setores    Setor[]
+  mesas      Mesa[]
+  cardapio   Cardapio[]
+  ingredientes Ingrediente[]
+  pedidos    Pedido[]
+}
+
+model Role {
+  id            BigInt   @id @default(autoincrement())
+  nome          String
+  restauranteId BigInt
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  usuarios      Usuario[]
+  rolePermissions RolePermission[]  // campo de relação
+}
+
+model Permission {
+  id      BigInt   @id @default(autoincrement())
+  nome    String   // ex: "create_order", "edit_user", etc.
+  rolePermissions RolePermission[]  // campo de relação
+}
+
+model RolePermission {
+  roleId      BigInt
+  permissionId BigInt
+
+  role        Role        @relation(fields: [roleId], references: [id])
+  permission  Permission  @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+//foi
+model Setor {
+  id            BigInt   @id @default(autoincrement())
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  restauranteId BigInt
+  nome          String
+  tipo          String?
+  cardapios     Cardapio[]
+  itensPedido   ItemPedido[]
+
+  @@unique([restauranteId, nome])
+}
+
+model Usuario {
+  id            BigInt   @id @default(autoincrement())
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  restauranteId BigInt
+  nome          String
+  email         String?  @unique
+  senhaHash     String
+  roleId        BigInt
+  role          Role      @relation(fields: [roleId], references: [id])
+  ativo         Boolean @default(true)
+  criadoEm      DateTime @default(now())
+  pedidosCriados Pedido[] @relation("UsuarioPedidosCriados")
+}
+
+model Mesa {
+  id            BigInt   @id @default(autoincrement())
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  restauranteId BigInt
+  identificador String
+  ativo         Boolean @default(true)
+
+  @@unique([restauranteId, identificador])
+  pedidos Pedido[]
+}
+//foi
+model Cardapio {
+  id            BigInt   @id @default(autoincrement())
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  restauranteId BigInt
+  nome          String
+  descricao     String?
+  preco         Decimal   @db.Decimal(10,2)
+  categoria     String?
+  ativo         Boolean   @default(true)
+  criadoEm      DateTime  @default(now())
+
+  setorId       BigInt?
+  setor         Setor?    @relation(fields: [setorId], references: [id])
+
+  ingredientes  CardapioIngrediente[]
+  itensPedido   ItemPedido[]
+}
+//foi
+model Ingrediente {
+  id            BigInt   @id @default(autoincrement())
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  restauranteId BigInt
+  nome          String
+  unidade       String
+  ativo         Boolean @default(true)
+
+  cardapios     CardapioIngrediente[]
+  modificadores ItemPedidoModificador[]
+  modificadoresSubstituto ItemPedidoModificador[] @relation("SubstitutoIngrediente")
+}
+//foi
+model CardapioIngrediente {
+  cardapioId    BigInt
+  ingredienteId BigInt
+  quantidade    Decimal? @db.Decimal(10,3)
+  unidade       String?
+
+  cardapio      Cardapio   @relation(fields: [cardapioId], references: [id], onDelete: Cascade)
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id], onDelete: Cascade)
+
+  @@id([cardapioId, ingredienteId])
+}
+
+model Pedido {
+  id              BigInt         @id @default(autoincrement())
+  codigo          String        @default(cuid()) @unique
+  restaurante     Restaurante    @relation(fields: [restauranteId], references: [id])
+  restauranteId   BigInt
+
+  mesaId          BigInt?
+  mesa            Mesa?          @relation(fields: [mesaId], references: [id])
+
+  clienteNome     String?
+  telefone        String?
+  endereco        String?
+  observacao      String?
+  canal           String          @default("mesa") // mesa, balcao, delivery
+  formaPagamento  String?
+  total           Decimal         @default(0.00)
+  status          StatusPedido    @default(recebido)
+
+  criadoPorId     BigInt?
+  criadoPor       Usuario?        @relation("UsuarioPedidosCriados", fields: [criadoPorId], references: [id])
+
+  criadoEm        DateTime        @default(now())
+  atualizadoEm    DateTime        @updatedAt
+
+  itens           ItemPedido[]
+}
+
+
+model ItemPedido {
+  id            BigInt   @id @default(autoincrement())
+  uuid          String  @default(uuid())
+
+  pedido        Pedido   @relation(fields: [pedidoId], references: [id])
+  pedidoId      BigInt
+
+  cardapio      Cardapio @relation(fields: [cardapioId], references: [id])
+  cardapioId    BigInt
+
+  quantidade    Int
+  precoUnitario Decimal  @default(0.00)
+  subtotal      Decimal  @default(0.00)
+
+  observacao    String?
+  status        StatusItem @default(pendente)
+
+  setorId       BigInt?
+  setor         Setor?    @relation(fields: [setorId], references: [id])
+
+  criadoEm      DateTime @default(now())
+  atualizadoEm  DateTime @updatedAt
+
+  modificadores ItemPedidoModificador[]
+}
+
+
+model ItemPedidoModificador {
+  id                   BigInt   @id @default(autoincrement())
+  itemPedido           ItemPedido @relation(fields: [itemPedidoId], references: [id])
+  itemPedidoId         BigInt
+
+  ingredienteId        BigInt?
+  ingrediente          Ingrediente? @relation(fields: [ingredienteId], references: [id])
+
+  acao                 AcaoModificador
+  quantidade           Decimal? @db.Decimal(10,3)
+  unidade              String?
+
+  substitutoIngredienteId BigInt?
+  substitutoIngrediente   Ingrediente? @relation("SubstitutoIngrediente", fields: [substitutoIngredienteId], references: [id])
+
+  precoExtra           Decimal? @db.Decimal(10,2) @default(0)
+}
