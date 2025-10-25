@@ -77,6 +77,27 @@ async index(req, res) {
         data: { status },
         include: { modificadores: true }
       });
+      /*if (status === "pronto") {
+        await prisma.pedido.update({
+          where: { id: Number(item.pedidoId) },
+          data: { status: "em_preparo" },
+        });
+      }*/
+     const pedido = await prisma.pedido.findUnique({where: {id: Number(item.pedidoId)}, include: { itens: true } })
+    
+    if(pedido.itens.some(i => i.status === "pronto") && 
+    !pedido.itens.every(i => i.status !== "pendente")){
+      if(pedido.status === "recebido"){
+        console.log("vai atualizar para em preparo")
+        await prisma.pedido.update({
+          where: { id: Number(item.pedidoId) },
+          data: { status: "em_preparo" },
+        });
+        
+        console.log("não vai atualizar para em preparo")
+      }
+    }
+     
       const pedidoAtualizado = await prisma.pedido.findUnique({ where: { id: item.pedidoId }, include: { itens: { include: { cardapio: true } } }});
       const io = req.app.get('io');
       io.emit('pedidoAtualizado', pedidoAtualizado);

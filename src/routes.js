@@ -81,7 +81,7 @@ routes.get('/pedido', authMiddleware, PedidoController.index); //listar todos os
 routes.get('/pedido/:id', authMiddleware, PedidoController.findByID); //buscar pedido por ID
 routes.get('/pedido/restaurante/:restauranteId', authMiddleware, PedidoController.findByRestaurante); //buscar pedidos por restaurante
 routes.get('/pedido/setor/:setorId', authMiddleware, PedidoController.indexPorSetor); //Listar todos os pedidos por area e por restaurante
-routes.put('/pedido/:id', authMiddleware, PedidoController.update); //atualizar pedido (ex: status)
+routes.patch('/pedido/:id', authMiddleware, PedidoController.update); //atualizar pedido (ex: status)
 routes.delete('/pedido/:id', authMiddleware, PedidoController.delete); //deletar pedido
 
 

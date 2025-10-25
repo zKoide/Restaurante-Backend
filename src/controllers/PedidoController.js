@@ -144,6 +144,7 @@ module.exports = {
   async index(req, res) {
     try {
       const pedidos = await prisma.pedido.findMany({
+        orderBy: {id: 'asc'},
         include: {
           itens: { include: { 
             cardapio: true,
@@ -195,7 +196,10 @@ module.exports = {
       const pedido = await prisma.pedido.findUnique({
         where: { id: BigInt(id) },
         include: {
-          itens: { include: { modificadores: true } }
+          itens: { include: { 
+            cardapio: true,
+            modificadores: true 
+          } }
         }
       });
       if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado' });
@@ -228,12 +232,29 @@ module.exports = {
     try {
       const { id } = req.params;
       const { status, clienteNome, mesaId } = req.body;
-
+      console.log(id, status)
       const pedido = await prisma.pedido.update({
         where: { id: BigInt(id) },
         data: { status, clienteNome, mesaId },
         include: { itens: { include: { modificadores: true } } }
       });
+
+      if (status === "cancelado") {
+        await prisma.itemPedido.updateMany({
+          where: { pedidoId: Number(id) },
+          data: { status: "cancelado" },
+        });
+      }
+      if (status === "entregue") {
+        await prisma.itemPedido.updateMany({
+          where: { pedidoId: Number(id) },
+          data: { status: "entregue" },
+        });
+      }
+      const pedidoAtualizado = await prisma.pedido.findUnique({ where: { id: id }, include: { itens: { include: { cardapio: true } } }});
+      console.log(pedidoAtualizado);
+      const io = req.app.get('io');
+      io.emit('pedidoAtualizado', pedidoAtualizado);
 
       res.json(pedido);
     } catch (err) {
