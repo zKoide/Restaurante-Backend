@@ -137,6 +137,8 @@ model Cardapio {
   id            BigInt   @id @default(autoincrement())
   restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
   restauranteId BigInt
+  prodVariacao  ProdutoVariacao[]
+
   nome          String
   descricao     String?
   preco         Decimal   @db.Decimal(10,2)
@@ -150,14 +152,28 @@ model Cardapio {
   ingredientes  CardapioIngrediente[]
   itensPedido   ItemPedido[]
 }
+
+
+model ProdutoVariacao {
+  id              BigInt         @id @default(autoincrement())
+  cardapio        Cardapio       @relation(fields: [cardapioId], references: [id])
+  cardapioId      BigInt
+
+  nome            String?
+  preco           String?
+  frutasMax       String?
+  acompMax        String?
+}
 //foi
 model Ingrediente {
-  id            BigInt   @id @default(autoincrement())
-  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
-  restauranteId BigInt
-  nome          String
-  unidade       String
-  ativo         Boolean @default(true)
+  id             BigInt   @id @default(autoincrement())
+  restaurante    Restaurante @relation(fields: [restauranteId], references: [id])
+  restauranteId  BigInt
+  nome           String
+  tipo           String?
+  unidade        String
+  precoAdicional String?
+  ativo          Boolean @default(true)
 
   cardapios     CardapioIngrediente[]
   modificadores ItemPedidoModificador[]
@@ -202,6 +218,7 @@ model Pedido {
 
   itens           ItemPedido[]
 }
+
 
 
 model ItemPedido {

@@ -26,8 +26,8 @@ routes.delete('/users/:id', req = authMiddleware, UserController.delete); // des
 routes.post('/userinf', req = authMiddleware, UserController.userinf);   // info do usuário logado
 
 // ---------------- ROLES ----------------
-routes.get('/roles', authMiddleware, RoleController.index);
-routes.post('/roles', authMiddleware, RoleController.register);
+routes.get('/roles', RoleController.index);
+routes.post('/roles', RoleController.register);
 routes.get('/roles/:id', authMiddleware, RoleController.findByID);
 routes.put('/roles/:id', authMiddleware, RoleController.update);
 routes.delete('/roles/:id', authMiddleware, RoleController.delete);

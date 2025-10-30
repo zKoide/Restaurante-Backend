@@ -143,8 +143,11 @@ module.exports = {
   // Listar todos os pedidos
   async index(req, res) {
     try {
+      
+      const restauranteId = req.RestUser
       const pedidos = await prisma.pedido.findMany({
         orderBy: {id: 'asc'},
+        where: {restauranteId },
         include: {
           itens: { include: { 
             cardapio: true,

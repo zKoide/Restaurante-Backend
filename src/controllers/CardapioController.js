@@ -70,6 +70,7 @@ module.exports = {
                         ingrediente: true // <-- aqui ele faz join com Ingrediente
                         }
                     },
+                    prodVariacao: true
                 }
             });
             res.json(cardapios);

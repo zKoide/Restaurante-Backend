@@ -28,7 +28,7 @@ module.exports = {
                     email,
                     senhaHash: hashedPassword,
                     ativo: ativo !== undefined ? ativo : true,
-                    roleId
+                    roleId: "1"
                 },
             });
 
