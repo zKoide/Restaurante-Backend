@@ -73,6 +73,7 @@ module.exports = {
                     prodVariacao: true
                 }
             });
+            console.log(cardapios)
             res.json(cardapios);
         } catch (error) {
             res.status(500).json({ error: error.message });
